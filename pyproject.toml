@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tessera-llm"
+version = "0.4.0"
+description = "From teacher to tiles — a from-scratch LLM distillation & serving engine with custom Triton/CUDA kernels."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Zengxiao He", email = "hemikeal@gmail.com" }]
+keywords = [
+    "llm", "inference", "cuda", "triton", "flash-attention",
+    "knowledge-distillation", "fsdp", "speculative-decoding",
+    "quantization", "kv-cache", "paged-attention", "jax", "interpretability",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.2",
+]
+
+[project.optional-dependencies]
+# GPU-only: Triton ships Linux+NVIDIA wheels. Kernels degrade gracefully to the
+# torch reference path when this extra is absent (e.g. on macOS / CPU CI).
+gpu = ["triton>=2.2"]
+jax = ["jax>=0.4.25", "jaxlib>=0.4.25"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/zengxiao-he/tessera"
+Repository = "https://github.com/zengxiao-he/tessera"
+
+[project.scripts]
+tessera = "tessera.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tessera"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = ["E501", "B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "gpu: marks tests that require a CUDA GPU + Triton (deselect with '-m \"not gpu\"')",
+    "slow: marks slow tests",
+]
+filterwarnings = ["ignore::DeprecationWarning"]

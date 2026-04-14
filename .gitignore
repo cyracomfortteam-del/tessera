@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+.venv-*/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Rust
+tessera-rs/target/
+**/*.rs.bk
+Cargo.lock
+
+# Model artifacts / data
+*.bin
+*.pt
+*.safetensors
+*.ckpt
+checkpoints/
+data/raw/
+data/cache/
+*.npy
+!tests/**/*.npy
+
+# Profiling output
+*.nsys-rep
+*.qdrep
+*.ncu-rep
+*.nvtx
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
