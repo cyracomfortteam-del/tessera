@@ -1,0 +1,39 @@
+[package]
+name = "tessera-gateway"
+version = "0.4.0"
+edition = "2021"
+rust-version = "1.75"
+description = "Async tokio/axum serving gateway for the Tessera inference engine, with optional PyO3 bindings."
+license = "Apache-2.0"
+authors = ["Zengxiao He <hemikeal@gmail.com>"]
+
+[lib]
+name = "tessera_gateway"
+# `cdylib` is what PyO3 needs to produce an importable Python extension; `rlib` keeps it
+# usable as a normal Rust dependency (and testable with `cargo test`).
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+axum = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tower = { version = "0.5", features = ["util"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
+async-trait = "0.1"
+# PyO3 is opt-in (needs libpython at link time); the pure-Rust gateway builds without it.
+pyo3 = { version = "0.23", features = ["extension-module"], optional = true }
+
+[features]
+default = []
+python = ["dep:pyo3"]
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+
+[[bin]]
+name = "tessera-gateway"
+path = "src/main.rs"
