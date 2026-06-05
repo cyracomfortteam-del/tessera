@@ -9,7 +9,7 @@ description = "From teacher to tiles — a from-scratch LLM distillation & servi
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-authors = [{ name = "Zengxiao He", email = "hemikeal@gmail.com" }]
+authors = [{ name = "Zengxiao He", email = "zengxiao@stanford.edu" }]
 keywords = [
     "llm", "inference", "cuda", "triton", "flash-attention",
     "knowledge-distillation", "fsdp", "speculative-decoding",

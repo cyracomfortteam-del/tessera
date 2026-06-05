@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.75"
 description = "Async tokio/axum serving gateway for the Tessera inference engine, with optional PyO3 bindings."
 license = "Apache-2.0"
-authors = ["Zengxiao He <hemikeal@gmail.com>"]
+authors = ["Zengxiao He <zengxiao@stanford.edu>"]
 
 [lib]
 name = "tessera_gateway"
